@@ -238,16 +238,14 @@
 
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
-    // TIP: Try re-using reduce() here.
-    if(!iterator) {
-      iterator = _.identity;
+    if(iterator == undefined){
+      return _.reduce(collection, function(startValue, item) {
+        return !!item && startValue;
+      }, true);
     }
-    return _.reduce(collection, function(accum, value){ 
-      if (!iterator(value)) {
-        accum = false;
-        return accum;
-      }       
-    }, true)
+    return _.reduce(collection, function(startValue, item) {
+      return !!iterator(item) && startValue;//appply a binary operator "and" on the iterator function and the start value
+    }, true);
   };
 
 
@@ -256,6 +254,12 @@
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    return !_.every(collection, function(value) {
+      if(iterator) {
+        return !iterator(value);
+      }
+      return !value;
+    })
   };
 
 
@@ -278,11 +282,26 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    _.each(arguments, function(args) {//apply on each argument the following function
+      _.each(args, function(value, key) {
+        obj[key] = value;//add the desired property
+      });
+    });
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+
+    _.each(arguments, function(args) {//apply on each argument the following function
+      _.each(args, function(value, key) {
+        if(!obj.hasOwnProperty(key)){
+          obj[key] = value;//add the desired property
+        }
+      });
+    });
+    return obj;
   };
 
 
@@ -326,6 +345,14 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    var funcReturns = {};//new object
+    return function() {
+      var arg = JSON.stringify(arguments);//turn arguments into strings to be used as keys for the funcReturns object
+      if (!funcReturns[arg]) {//Check if the value exists for the 'args' key
+        funcReturns[arg] = func.apply(this, arguments);//if the value does not exist, apply the function and store the result
+      }
+      return funcReturns[arg];
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -335,6 +362,10 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var args = Array.prototype.slice.call(arguments, 2);//get the arguments from position '2'
+    setTimeout(function() {
+      func.apply(this, args);//execute the function with the prevoisuly obtained arguments
+    }, wait);
   };
 
 
@@ -349,6 +380,14 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var changed = [];//empty array to store the shuffled elements
+    var copies = array.slice(0, array.length);//copy of the paramater array
+    for (var i = 0; i < array.length; i++) {
+      var random = Math.floor(Math.random() * copies.length);//to obtain random index
+      changed.push(copies[random]);//push into the empty array defined previously the element from 'copies' resulting from the random index
+      copies.splice(random, 1)//delete element from random index from copies array
+    }
+  return changed;
   };
 
 
