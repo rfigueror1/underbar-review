@@ -107,21 +107,53 @@
     //input is an array
     //output is an array
     var result = [];
-    for(var i = 0; i<array.length; i++){
-      if(_.indexOf(result,array[i]) === -1){
-        result.push(array[i]);
+    if(iterator === undefined && !isSorted){
+      for(var i = 0; i<array.length; i++){
+        if(_.indexOf(result,array[i]) === -1){
+          result.push(array[i]);
+        }  
       }
     }
+    if(iterator === undefined && isSorted){    
+      for(var i = 0; i<array.length; i++){
+        if(_.indexOf(result,array[i]) === -1){
+          result.push(array[i]);
+        }  
+      }
+    }
+    
+    if(iterator && isSorted){
+      var temp = [];
+      for(var j=0; j<array.length; j++){ // [1, 2, 2, 3, 4, 4]
+        if(_.indexOf(temp, iterator(array[j])) === -1){ // [true, false]
+          temp.push(iterator(array[j])); // [true, false, false, false, false, false]
+          result.push(array[j]);  
+        }
+      }  
+    }
+
+    // if(iterator !== undefined && isSorted){
+    //   result = _.each(array, iterator); 
+    // }
+    //sort the result array
     return result;
   };
 
 
   // Return the results of applying an iterator to each element.
   _.map = function(collection, iterator) {
+    var result = []; // how do we add to the array?
+    _.each(collection, function(x) { 
+        result.push(iterator(x))});
     // map() is a useful primitive iteration function that works a lot
     // like each(), but in addition to running the operation on all
     // the members, it also maintains an array of results.
+    return result;
   };
+
+// input: array/objects
+// output: array
+// process: ?
 
   /*
    * TIP: map is really handy when you want to transform an array of
@@ -162,8 +194,35 @@
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
   _.reduce = function(collection, iterator, accumulator) {
+    // var initializing = arguments.length === 2;
+    // if (initializing) {
+    //     initializing = false;
+    //     accumulator = collection[0];   
+    // } else {
+    //   for (var i = 0; i < collection.length; i++) { 
+    //     if (iterator !== undefined) {
+    //       accumulator = iterator(accumulator, collection[i]);
+    //     } else { 
+    //       accumulator = accumulator;
+    //     }
+    //   }
+    // }
+    // return accumulator;
+    var first = true;
+    _.each(collection, function(item) {
+      if (first && accumulator === undefined) {
+        accumulator = item;
+      } else {
+        accumulator = iterator(accumulator, item);//apply the iterator function on accumulated result
+      } 
+      first = false;
+    });
+    return accumulator;
   };
 
+// input: list
+// output: value (integer/string?)
+  
   // Determine if the array or object contains a given value (using `===`).
   _.contains = function(collection, target) {
     // TIP: Many iteration problems can be most easily expressed in
@@ -180,7 +239,18 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    if(!iterator) {
+      iterator = _.identity;
+    }
+    return _.reduce(collection, function(accum, value){ 
+      if (!iterator(value)) {
+        accum = false;
+        return accum;
+      }       
+    }, true)
   };
+
+
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
